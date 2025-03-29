@@ -59,16 +59,12 @@ class SupplierSerializer(serializers.ModelSerializer):
 
 
 class InventoryItemSupplierSerializer(serializers.ModelSerializer):
-    item_name = serializers.ReadOnlyField(source='item.name')
     supplier_name = serializers.ReadOnlyField(source='supplier.name')
-    
+    item_name = serializers.ReadOnlyField(source='item.name')  
+      
     class Meta:
         model = InventoryItemSupplier
-        fields = [
-            'id', 'item', 'item_name', 'supplier', 'supplier_name',
-            'supplier_sku', 'supplier_price', 'lead_time_days', 'notes'
-        ]
-        read_only_fields = ['id']
+        fields = '__all__'
 
 class InventoryItemSerializer(serializers.ModelSerializer):
     owner_username = serializers.ReadOnlyField(source='owner.username')
@@ -87,8 +83,10 @@ class InventoryItemSerializer(serializers.ModelSerializer):
 
 
 class InventoryItemCreateUpdateSerializer(serializers.ModelSerializer):
+    owner = serializers.ReadOnlyField(source='owner.username')
+    
     class Meta:
         model = InventoryItem
-        fields = ['id', 'name', 'description', 'category', 
-                  'quantity', 'price', 'sku', 'location']
+        fields = '__all__'
+        read_only_fields = ['owner', 'date_added', 'last_updated']
                 
