@@ -7,7 +7,7 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'password', 'first_name', 'last_name')
+        fields = ('id', 'username', 'email', 'password', 'first_name', 'last_name', 'is_staff')
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -30,16 +30,20 @@ class UserSerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = '__all__'
+        fields = ['id', 'name', 'description', 'created_at']
+        read_only_fields = ['created_at']
         
         
 class InventoryLogSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField()
+    item_name = serializers.ReadOnlyField(source='item.name')
+    username = serializers.ReadOnlyField(source='user.username')
     
     class Meta:
         model = InventoryLog
-        fields = '__all__'
-        read_only_fields = ('user', 'item', 'previous_quantity', 'new_quantity', 'timestamp')        
+        fields = ['id', 'item', 'item_name', 'user', 'username', 'action', 
+                  'quantity_change', 'previous_quantity', 'new_quantity', 
+                  'timestamp', 'notes']
+        read_only_fields = ['id', 'timestamp']       
 
 
 class SupplierSerializer(serializers.ModelSerializer):
@@ -47,34 +51,44 @@ class SupplierSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Supplier
-        fields = '__all__'
-        read_only_fields = ('owner',)        
+        fields = ['id', 'name', 'contact_name', 'email', 'phone', 
+                  'owner', 'address', 'created_at']
+        
+    def create(self, validated_data):
+        return Supplier.objects.create(**validated_data)       
 
 
 class InventoryItemSupplierSerializer(serializers.ModelSerializer):
+    item_name = serializers.ReadOnlyField(source='item.name')
     supplier_name = serializers.ReadOnlyField(source='supplier.name')
     
     class Meta:
         model = InventoryItemSupplier
-        fields = '__all__'
+        fields = [
+            'id', 'item', 'item_name', 'supplier', 'supplier_name',
+            'supplier_sku', 'supplier_price', 'lead_time_days', 'notes'
+        ]
+        read_only_fields = ['id']
 
 class InventoryItemSerializer(serializers.ModelSerializer):
-    owner = serializers.ReadOnlyField(source='owner.username')
+    owner_username = serializers.ReadOnlyField(source='owner.username')
     category_name = serializers.ReadOnlyField(source='category.name')
     logs = InventoryLogSerializer(many=True, read_only=True)
     suppliers = InventoryItemSupplierSerializer(many=True, read_only=True)
     
     class Meta:
         model = InventoryItem
-        fields = '__all__'
-        read_only_fields = ('owner', 'date_added', 'last_updated', 'category_name', 'logs', 'suppliers')
+        fields = [
+            'id', 'name', 'description', 'category', 'category_name',
+            'quantity', 'price', 'sku', 'location','owner_username', 'logs', 'suppliers',
+            'date_added', 'last_updated'
+        ]
+        read_only_fields = ['id', 'date_added', 'last_updated']
 
 
 class InventoryItemCreateUpdateSerializer(serializers.ModelSerializer):
-    owner = serializers.ReadOnlyField(source='owner.username')
-    
     class Meta:
         model = InventoryItem
-        fields = '__all__'
-        read_only_fields = ('owner', 'date_added', 'last_updated')
+        fields = ['id', 'name', 'description', 'category', 
+                  'quantity', 'price', 'sku', 'location']
                 

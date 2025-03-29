@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
+from django.utils import timezone
 
  
 class Category(models.Model):
@@ -12,6 +13,9 @@ class Category(models.Model):
     def __str__(self):
         return self.name
     
+    class meta:
+        verbose_name_plural = 'Categories'
+    
 class InventoryItem(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
@@ -19,6 +23,8 @@ class InventoryItem(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='items')
     owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, related_name='inventory_items')
+    sku = models.CharField(max_length=50, unique=True, blank=True, null=True, help_text="Stock Keeping Unit")
+    location = models.CharField(max_length=100, blank=True, null=True, help_text="Warehouse location")
     date_added = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
     
@@ -39,14 +45,14 @@ class InventoryLog(models.Model):
     item = models.ForeignKey(InventoryItem, on_delete=models.CASCADE, related_name='logs')
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='inventory_logs')
     action = models.CharField(max_length=10, choices=ACTION_CHOICES)
-    quantity_change = models.IntegerField()
-    previous_quantity = models.IntegerField()
-    new_quantity = models.IntegerField()
-    timestamp = models.DateTimeField(auto_now_add=True)
+    quantity_change = models.PositiveIntegerField()
+    previous_quantity = models.PositiveIntegerField()
+    new_quantity = models.PositiveIntegerField()
+    timestamp = models.DateTimeField(default=timezone.now)
     notes = models.TextField(blank=True, null=True)
     
     def __str__(self):
-        return f"{self.action} {self.quantity_change} of {self.item.name}"
+        return f"{self.get_action_display()} - {self.item.name}"
     
     class Meta:
         ordering = ['-timestamp']
@@ -74,10 +80,10 @@ class InventoryItemSupplier(models.Model):
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='items')
     supplier_sku = models.CharField(max_length=100, blank=True, null=True)
     supplier_price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
-    lead_time_days = models.PositiveIntegerField(default=1)
+    lead_time_days = models.PositiveIntegerField(blank=True, null=True)
     
     def __str__(self):
-        return f"{self.item.name} - {self.supplier.name}"
+        return f"{self.supplier.name} supplies {self.item.name}"
     
     class Meta:
         unique_together = ('item', 'supplier')                
