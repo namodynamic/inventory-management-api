@@ -2,36 +2,55 @@ from django.shortcuts import render
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from django.contrib.auth.models import User
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from .serializers import UserSerializer, CategorySerializer, InventoryItemSerializer, InventoryLogSerializer, SupplierSerializer, InventoryItemSupplierSerializer, InventoryItemCreateUpdateSerializer
 from .models import Category, InventoryItem, Supplier, InventoryLog, InventoryItemSupplier
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-
 from .permissions import IsOwnerOrReadOnly, IsOwner
+
+
+
+from rest_framework.views import APIView
+
+class IndexView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request):
+        
+        data = {
+            "message": "Welcome to  Inventory Management System API!",
+            "endpoints": {
+                "users": "api/inventory/users/",
+                "categories": "api/inventory/categories/",
+                "items": "api/inventory/items/",
+                "logs": "api/inventory/logs/",
+                "suppliers": "api/inventory/suppliers/",
+                "item-suppliers": "api/inventory/item-suppliers/",
+            },
+            "docs":  "Documentation coming soon!"
+        }
+        return Response(data)
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]  # Default permission: Only authenticated users can access
+    permission_classes = [IsAuthenticated]
     
-    # Override the default permissions
     def get_permissions(self):
         if self.action == 'create':
-            return []  # Anyone can create a new user
+            return [AllowAny()]
         elif self.action in ['update', 'partial_update', 'destroy']:
-            return [IsAuthenticated()]  # Only the user themselves or admin can modify
+            return [IsAuthenticated()]
         elif self.action == 'retrieve': 
-            return [IsAuthenticated()] # Only the user themselves or admin can view
-        return [IsAdminUser()]  # Default to admin only for list and other actions
+            return [IsAuthenticated()]
+        return [IsAdminUser()]  # admin only for list and other actions
     
-    # Override the default queryset
     def get_queryset(self):
-        user = self.request.user # Get the user making the request
+        user = self.request.user 
         if user.is_staff: # If the user is an admin, return all users
             return User.objects.all()
-        return User.objects.filter(id=user.id) # If non-admin, only return the user making the request
+        return User.objects.filter(id=user.id) # Otherwise, only return the user making the request
     
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
