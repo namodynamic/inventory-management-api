@@ -12,12 +12,10 @@ class UserSerializer(serializers.ModelSerializer):
             'password': {'write_only': True}
         }
     
-    # override create method for user creation
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
         return user
     
-    # override update method for user update
     def update(self, instance, validated_data):
         password = validated_data.pop('password', None)
         user = super().update(instance, validated_data)
@@ -37,10 +35,11 @@ class CategorySerializer(serializers.ModelSerializer):
 class InventoryLogSerializer(serializers.ModelSerializer):
     item_name = serializers.ReadOnlyField(source='item.name')
     username = serializers.ReadOnlyField(source='user.username')
+    action_display = serializers.ReadOnlyField(source='get_action_display')
     
     class Meta:
         model = InventoryLog
-        fields = ['id', 'item', 'item_name', 'user', 'username', 'action', 
+        fields = ['id', 'item', 'item_name', 'user', 'username', 'action', 'action_display', 
                   'quantity_change', 'previous_quantity', 'new_quantity', 
                   'timestamp', 'notes']
         read_only_fields = ['id', 'timestamp']       
@@ -69,14 +68,13 @@ class InventoryItemSupplierSerializer(serializers.ModelSerializer):
 class InventoryItemSerializer(serializers.ModelSerializer):
     owner_username = serializers.ReadOnlyField(source='owner.username')
     category_name = serializers.ReadOnlyField(source='category.name')
-    logs = InventoryLogSerializer(many=True, read_only=True)
     suppliers = InventoryItemSupplierSerializer(many=True, read_only=True)
     
     class Meta:
         model = InventoryItem
         fields = [
             'id', 'name', 'description', 'category', 'category_name',
-            'quantity', 'price', 'sku', 'location','owner_username', 'logs', 'suppliers',
+            'quantity', 'price', 'sku', 'location','owner_username', 'suppliers',
             'date_added', 'last_updated'
         ]
         read_only_fields = ['id', 'date_added', 'last_updated']
@@ -89,4 +87,26 @@ class InventoryItemCreateUpdateSerializer(serializers.ModelSerializer):
         model = InventoryItem
         fields = '__all__'
         read_only_fields = ['owner', 'date_added', 'last_updated']
-                
+
+
+
+class InventoryLevelSerializer(serializers.ModelSerializer):
+    category_name = serializers.ReadOnlyField(source='category.name')
+    stock_status = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = InventoryItem
+        fields = [
+            'id', 'name', 'sku', 'quantity', 'category_name',
+            'location', 'price', 'stock_status', 'last_updated'
+        ]
+    
+    def get_stock_status(self, obj):
+        if obj.quantity <= 0:
+            return "Out of Stock"
+        elif obj.quantity < 20: 
+            return "Low Stock"
+        elif obj.quantity < 50: 
+            return "Medium Stock"
+        else:
+            return "In Stock"                

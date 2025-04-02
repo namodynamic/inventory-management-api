@@ -13,4 +13,5 @@ router.register(r'item-suppliers', views.InventoryItemSupplierViewSet, basename=
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('api/inventory/', include(router.urls)),
 ]
