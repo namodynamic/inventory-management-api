@@ -18,10 +18,22 @@ class InventoryItemSupplierInline(admin.TabularInline):
     extra = 1
 
 class InventoryItemAdmin(admin.ModelAdmin):
-    list_display = ('id','name', 'category', 'quantity', 'price', 'owner', 'date_added', 'last_updated')
+    list_display = ('id','name', 'category', 'quantity', 'price', 'owner', 'stock_level', 'date_added', 'last_updated')
     list_filter = ('category', 'owner')
     search_fields = ('name', 'description', 'category__name')
-    inlines = [InventoryLogInline, InventoryItemSupplierInline] 
+    inlines = [InventoryLogInline, InventoryItemSupplierInline]
+    
+    def stock_level(self, obj):
+        if obj.quantity <= 0:
+            return "Out of Stock"
+        elif obj.quantity < 20:
+            return "Low Stock"
+        elif obj.quantity < 50:
+            return "Medium Stock"
+        else:
+            return "In Stock"
+    stock_level.short_description = 'Stock Level'
+     
 admin.site.register(InventoryItem, InventoryItemAdmin)
 
 class InventoryLogAdmin(admin.ModelAdmin):
