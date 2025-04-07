@@ -22,7 +22,12 @@ class UserSerializer(serializers.ModelSerializer):
         if password:
             user.set_password(password)
             user.save()
-        return user   
+        return user  
+    
+
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField() 
     
     
 class CategorySerializer(serializers.ModelSerializer):

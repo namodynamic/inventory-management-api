@@ -4,13 +4,16 @@ from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from .serializers import (
     UserSerializer, CategorySerializer, InventoryItemSerializer, InventoryLogSerializer, 
-    SupplierSerializer, InventoryItemSupplierSerializer, InventoryItemCreateUpdateSerializer, InventoryLevelSerializer
+    SupplierSerializer, InventoryItemSupplierSerializer, InventoryItemCreateUpdateSerializer, InventoryLevelSerializer,
+    LoginSerializer
 )
 from .models import Category, InventoryItem, Supplier, InventoryLog, InventoryItemSupplier
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from .permissions import IsOwnerOrReadOnly, IsOwner
 from .filters import InventoryItemFilter
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 from rest_framework.views import APIView
@@ -42,9 +45,9 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action == 'create':
             return [AllowAny()]
-        elif self.action in ['update', 'partial_update', 'destroy']:
-            return [IsAuthenticated()]
-        elif self.action == 'retrieve': 
+        elif self.action == 'login':
+            return [AllowAny()]
+        elif self.action in ['me', 'update', 'partial_update', 'destroy', 'retrieve', 'logout']:
             return [IsAuthenticated()]
         return [IsAdminUser()] 
     
@@ -54,6 +57,52 @@ class UserViewSet(viewsets.ModelViewSet):
             return User.objects.all()
         return User.objects.filter(id=user.id)
     
+    @action(detail=False, methods=['get', 'put', 'patch'], url_path='me')
+    def me(self, request):
+        user = request.user
+        if request.method in ['PUT', 'PATCH']:
+            serializer = self.get_serializer(user, data=request.data, partial=(request.method == 'PATCH'))
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+        serializer = self.get_serializer(user)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['post'], url_path='login')
+    def login(self, request):
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        username = serializer.validated_data['username']
+        password = serializer.validated_data['password']
+        user = authenticate(username=username, password=password)
+        
+        if user is not None:
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'is_staff': user.is_staff,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                }
+            })
+        return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    @action(detail=False, methods=['post'], url_path='logout')
+    def logout(self, request):
+        refresh_token = request.data.get('refresh_token')
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({'message': 'Successfully logged out'}, status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response({'error': 'Invalid token or user already logged out'}, status=status.HTTP_400_BAD_REQUEST)
+       
+       
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
