@@ -13,6 +13,7 @@ A RESTful API for inventory management built with Django and Django REST Framewo
 - **Stock Status**: Real-time stock status (e.g., "In Stock", "Low Stock", "Out of Stock").
 - **Role-Based Access Control**: Staff users can manage all items, while regular users can only manage their own items.
 - **Low Stock Alert**: Send email alerts when item's stock level drops below a certain threshold.
+- **Interactive API Documentation**: Swagger and ReDoc documentation for developers
 
 ## Deployed URL
 
@@ -115,10 +116,13 @@ The API is deployed and accessible at the following URL:
 
 ## Documentation
 
-You can find the full API documentation [here](https://documenter.getpostman.com/view/24484793/2sB2cSfiNL).
+Interactive API documentation is available at [Swagger](http://localhost:8000/api/inventory/swagger/) and [ReDoc](http://localhost:8000/api/inventory/redoc/).
+
+You can also find the API documentation [here](https://documenter.getpostman.com/view/24484793/2sB2cSfiNL).
 
 ### Technologies Used
 
 - Backend: Django, Django REST Framework
 - Database: PostgreSQL
 - Authentication: Django REST Framework SimpleJWT
+- API Documentation: drf-yasg (Swagger and ReDoc)
