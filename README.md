@@ -116,9 +116,9 @@ The API is deployed and accessible at the following URL:
 
 ## Documentation
 
-Interactive API documentation is available at [Swagger](http://localhost:8000/api/inventory/swagger/) and [ReDoc](http://localhost:8000/api/inventory/redoc/).
+Interactive API documentation is available at [Swagger](https://namodynamic1.pythonanywhere.com/swagger/) and [ReDoc](https://namodynamic1.pythonanywhere.com/redoc/).
 
-You can also find the API documentation [here](https://documenter.getpostman.com/view/24484793/2sB2cSfiNL).
+You can also find the API documentation [Postman](https://documenter.getpostman.com/view/24484793/2sB2cSfiNL).
 
 ### Technologies Used
 
