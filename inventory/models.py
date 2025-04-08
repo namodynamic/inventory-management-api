@@ -2,6 +2,9 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.core.mail import send_mail
 
  
 class Category(models.Model):
@@ -25,11 +28,15 @@ class InventoryItem(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, related_name='inventory_items')
     sku = models.CharField(max_length=50, unique=True, blank=True, null=True, help_text="Stock Keeping Unit")
     location = models.CharField(max_length=100, blank=True, null=True, help_text="Warehouse location")
+    low_stock_threshold = models.PositiveIntegerField(default=10, help_text="Minimum stock level before alert")
     date_added = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
     
     def __str__(self):
         return self.name
+    
+    def is_low_stock(self):
+        return self.quantity <= self.low_stock_threshold
     
     class Meta:
         ordering = ['name']    
@@ -88,3 +95,18 @@ class InventoryItemSupplier(models.Model):
     
     class Meta:
         unique_together = ('item', 'supplier')                
+
+
+# Signal to send email alert when stock is low
+@receiver(post_save, sender=InventoryItem)
+def check_low_stock(sender, instance, **kwargs):
+    if instance.is_low_stock():
+        send_mail(
+            subject=f"Low Stock Alert for {instance.name}",
+            message=f"The stock level for {instance.name} is below the threshold. Current quantity: {instance.quantity}.",
+            from_email='noreply@inventory.com',
+            recipient_list=[instance.owner.email],
+            fail_silently=False
+        )
+        
+        

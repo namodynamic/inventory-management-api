@@ -1,3 +1,4 @@
+from django.db import models
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from django.contrib.auth.models import User
@@ -127,7 +128,10 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
     ordering_fields = ['name', 'quantity', 'price', 'date_added', 'last_updated']
     
     def get_queryset(self):
-        return super().get_queryset().filter(owner=self.request.user)
+        user = self.request.user
+        if user.is_staff:
+            return super().get_queryset()
+        return super().get_queryset().filter(owner=user)
      
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
@@ -138,6 +142,15 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
     def stock_level(self, request):
         queryset = self.get_queryset()
         serializer = InventoryLevelSerializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'], url_path='low-stock')
+    def low_stock(self, request):
+        """
+        List all items that are low in stock
+        """
+        low_stock_items = self.get_queryset().filter(quantity__lt=models.F('low_stock_threshold'))
+        serializer = self.get_serializer(low_stock_items, many=True)
         return Response(serializer.data)
     
     @action(detail=True, methods=['get'], url_path='level')

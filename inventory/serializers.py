@@ -76,15 +76,19 @@ class InventoryItemSerializer(serializers.ModelSerializer):
     owner_username = serializers.ReadOnlyField(source='owner.username')
     category_name = serializers.ReadOnlyField(source='category.name')
     suppliers = InventoryItemSupplierSerializer(many=True, read_only=True)
+    is_low_stock = serializers.SerializerMethodField()
     
     class Meta:
         model = InventoryItem
         fields = [
             'id', 'name', 'description', 'category', 'category_name',
-            'quantity', 'price', 'sku', 'location','owner_username', 'suppliers',
-            'date_added', 'last_updated'
+            'quantity', 'price', 'sku', 'location','owner_username', 'suppliers', 'low_stock_threshold',
+            'date_added', 'last_updated', 'is_low_stock'
         ]
         read_only_fields = ['id', 'date_added', 'last_updated']
+        
+    def get_is_low_stock(self, obj):
+        return obj.is_low_stock()
 
 
 class InventoryItemCreateUpdateSerializer(serializers.ModelSerializer):

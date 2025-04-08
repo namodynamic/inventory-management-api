@@ -12,6 +12,7 @@ A RESTful API for inventory management built with Django and Django REST Framewo
 - **Pagination**: Efficient handling of large datasets
 - **Stock Status**: Real-time stock status (e.g., "In Stock", "Low Stock", "Out of Stock").
 - **Role-Based Access Control**: Staff users can manage all items, while regular users can only manage their own items.
+- **Low Stock Alert**: Send email alerts when item's stock level drops below a certain threshold.
 
 ## Deployed URL
 
@@ -66,6 +67,9 @@ The API is deployed and accessible at the following URL:
 - **Register User**: `/api/inventory/users/` (POST)
 - **Obtain JWT Token**: `/api/token/` (POST)
 - **Refresh JWT Token**: `/api/token/refresh/` (POST)
+- **Login User**: `/api/inventory/users/login/` (POST)
+- **User Profile**: `/api/inventory/users/me/` (GET)
+- **Logout User**: `/api/inventory/users/logout/` (POST)
 
 ### Inventory Items
 
@@ -77,6 +81,7 @@ The API is deployed and accessible at the following URL:
 - **Stock Level**: `/api/inventory/items/level/` (GET)
 - **Item Stock Level**: `/api/inventory/items/{id}/level/` (GET)
 - **Adjust Quantity**: `/api/inventory/items/{id}/adjust_quantity/` (POST)
+- **Low stock items**: `/api/inventory/items/low-stock/` (GET)
 
 ### Categories
 
