@@ -166,7 +166,7 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
             user=self.request.user,
             action='ADD',
             quantity_change=new_item.quantity,
-            previous_quantity= 0,
+            previous_quantity= new_item.quantity,
             new_quantity=new_item.quantity,
             notes=f"New item  '{new_item.name}' added with quantity {new_item.quantity} by {self.request.user.username}"
         )
@@ -187,7 +187,7 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
                 quantity_change=abs(new_quantity - old_quantity),
                 previous_quantity=old_quantity,
                 new_quantity=new_quantity,
-                notes=f"Quantity updated from {old_quantity} to {new_quantity}"
+                notes=f"Item '{updated_instance.name}' updated  by {self.request.user.username}"
             ) 
             
     @action(detail=True, methods=['post'])
